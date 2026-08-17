@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Crashtest</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Crashtest">
+<meta name="theme-color" content="#0E1418">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root{
+    --bg:#0E1418; --surface:#161F26; --line:#243039;
+    --ink:#E9EEF1; --muted:#7E8F9B;
+    --safe:#3DD68C; --warn:#F5A524; --breach:#E5484D;
+    --display:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--display)}
+  body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  .wrap{max-width:480px;margin:0 auto;padding:26px 20px 40px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+  .eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  .scen{font-size:10px;color:var(--muted);font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .readout{display:flex;align-items:flex-end;gap:12px;margin-bottom:6px}
+  .big{font-family:var(--mono);font-weight:700;font-size:54px;line-height:1;font-variant-numeric:tabular-nums}
+  .biglbl{font-size:12px;color:var(--muted);padding-bottom:8px}
+  .verdict{font-size:14px;font-weight:500;margin-bottom:22px}
+  .gauge{position:relative;height:44px;border-radius:6px;overflow:hidden;background:#0A1013;border:1px solid var(--line)}
+  .band{position:absolute;top:0;bottom:0;right:0;width:10%;
+    background-image:repeating-linear-gradient(135deg,var(--line) 0 2px,transparent 2px 7px);
+    border-left:1px dashed var(--muted)}
+  .fill{position:absolute;top:0;bottom:0;left:0;transition:width .25s ease}
+  .over{position:absolute;top:0;bottom:0;right:0;
+    background-image:repeating-linear-gradient(135deg,var(--breach) 0 2px,transparent 2px 6px)}
+  .gl{display:flex;justify-content:space-between;margin-top:6px}
+  .gl span{font-size:10px;color:var(--muted);font-family:var(--mono)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin:22px 0}
+  .clbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  .cnum{font-family:var(--mono);font-weight:700;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+  .cnote{font-size:12px;color:var(--muted);margin-top:5px}
+  .sub{margin-top:13px;padding-top:13px;border-top:1px solid var(--line)}
+  .srow{display:flex;justify-content:space-between;align-items:baseline}
+  .srow .k{font-size:12px;color:var(--muted)}
+  .srow .v{font-size:14px;font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums}
+  .hint{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:26px}
+  .pair .card{margin:0;padding:13px 15px}
+  .pair .v{font-family:var(--mono);font-weight:500;font-size:18px;font-variant-numeric:tabular-nums}
+  .pair .clbl{font-size:10px;margin-bottom:4px}
+  .sect{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 12px}
+  label.f{display:block;margin-bottom:12px}
+  .fh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .fl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  .fhint{font-size:10px;color:var(--muted);font-family:var(--mono)}
+  .fin{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:var(--bg)}
+  .fin input{width:100%;background:none;border:0;outline:none;color:var(--ink);
+    font-family:var(--mono);font-weight:500;font-size:17px;padding:10px 0;font-variant-numeric:tabular-nums}
+  .fin .sfx{font-size:13px;color:var(--muted);font-family:var(--mono);padding-left:8px;white-space:nowrap}
+  button.chk{display:flex;width:100%;align-items:center;gap:12px;text-align:left;
+    border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);
+    padding:12px;font-family:var(--display);font-size:13px;margin-bottom:26px}
+  .box{width:16px;height:16px;flex:0 0 auto;border:1px solid var(--muted);border-radius:3px;
+    display:flex;align-items:center;justify-content:center}
+  .box.on{border-color:var(--warn);background:var(--warn)}
+  .rows{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 16px}
+  .r{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)}
+  .r:last-child{border-bottom:0}
+  .r .k{font-size:13px;color:var(--muted)}
+  .r .v{font-size:14px;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+  .r.s .k{color:var(--ink)}
+  .r.s .v{color:var(--ink);font-weight:700}
+  .foot{font-size:11px;color:var(--muted);line-height:1.6;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <span class="eyebrow">Lombard / Crashtest</span>
+    <span class="scen" id="scen"></span>
+  </div>
+
+  <div class="readout">
+    <span class="big" id="buffer">—</span>
+    <span class="biglbl">Puffer</span>
+  </div>
+  <div class="verdict" id="verdict"></div>
+
+  <div class="gauge">
+    <div class="band"></div>
+    <div class="fill" id="fill"></div>
+    <div class="over" id="over" style="width:0"></div>
+  </div>
+  <div class="gl"><span id="glLeft"></span><span>Reserve 10 %</span></div>
+
+  <div class="card">
+    <div class="fh" style="margin-bottom:4px">
+      <span class="clbl" id="hLbl">Noch aufnehmbar</span>
+      <span class="fhint" id="hFactor"></span>
+    </div>
+    <div class="cnum" id="hMain">—</div>
+    <div class="cnote" id="hNote"></div>
+    <div class="sub">
+      <div class="srow"><span class="k" id="hAltLbl"></span><span class="v" id="hAlt"></span></div>
+      <div class="hint" id="hHint"></div>
+    </div>
+  </div>
+
+  <div class="pair">
+    <div class="card"><div class="clbl">Zins / Monat</div><div class="v" id="iM">—</div></div>
+    <div class="card"><div class="clbl">Zins p.&nbsp;a.</div><div class="v" id="iY">—</div></div>
+  </div>
+
+  <p class="sect">Eingaben</p>
+  <div id="fields"></div>
+
+  <button class="chk" id="chk">
+    <span class="box" id="box"></span>
+    <span>Beleihungssatz gleichzeitig &minus;6 Punkte</span>
+  </button>
+
+  <p class="sect">Rechenweg</p>
+  <div class="rows" id="rows"></div>
+
+  <p class="foot">
+    Puffer = 1 &minus; (Kredit &minus; Cash &minus; gecrashte Holdings) / Beleihungswert nach dem
+    Crash. Margin Call ab 0 %. Cash und Holdings heben den Beleihungswert nicht, sie tilgen
+    aber 1:1, während ein Wertpapierverkauf im Call den Beleihungswert mitnimmt.
+    PE-Fonds und Sammlerstücke gehören nicht hierher.
+  </p>
+</div>
+
+<script>
+const DEF = {depot:"314.420", credit:"84.127", line:"198.334", crash:"54",
+             rate:"3,49", cash:"0", hold:"0", bwCut:false};
+
+const FIELDS = [
+  {k:"depot",  label:"Depotwert Scalable",       sfx:"€"},
+  {k:"credit", label:"Kredit genutzt",           sfx:"€"},
+  {k:"line",   label:"Kreditlinie",              sfx:"€", hint:s=>"Satz "+pct(s.satz,2)},
+  {k:"crash",  label:"Crash-Szenario",           sfx:"%"},
+  {k:"rate",   label:"Sollzins",                 sfx:"% p. a."},
+  {k:"cash",   label:"Liquides Cash",            sfx:"€", hint:()=>"crasht nicht"},
+  {k:"hold",   label:"Sonstige liquide Holdings",sfx:"€",
+     hint:s=>s.holdGross>0 ? "im Crash "+eur(s.holdCrash) : "BTC, Fremddepot — crasht mit"},
+];
+
+let state = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem("crashtest");
+    if(raw) return Object.assign({}, DEF, JSON.parse(raw));
+  }catch(e){}
+  return Object.assign({}, DEF);
+}
+function save(){
+  try{ localStorage.setItem("crashtest", JSON.stringify(state)); }catch(e){}
+}
+
+function num(v){
+  if(typeof v==="number") return v;
+  if(!v) return 0;
+  const c = String(v).replace(/[\s€]/g,"").replace(/\.(?=\d{3}\b)/g,"").replace(",",".");
+  const n = parseFloat(c);
+  return isFinite(n)?n:0;
+}
+const eur = n => new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n);
+const pct = (n,d=1) => new Intl.NumberFormat("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d}).format(n*100)+" %";
+const dec = (n,d=2) => new Intl.NumberFormat("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
+
+function calc(){
+  const depot=num(state.depot), credit=num(state.credit), kl=num(state.line);
+  const crash=Math.min(Math.max(num(state.crash),0),99)/100;
+  const rate=num(state.rate)/100;
+  const cash=Math.max(num(state.cash),0), holdGross=Math.max(num(state.hold),0);
+
+  const satz = depot>0 ? kl/depot : 0;
+  const satzEff = Math.max(satz - (state.bwCut?0.06:0), 0);
+  const depotCrash = depot*(1-crash);
+  const bw = depotCrash*satzEff;
+  const holdCrash = holdGross*(1-crash);
+  const reserve = cash+holdCrash;
+  const netCredit = Math.max(credit-reserve,0);
+  const creditLeft = bw>0 ? 1-netCredit/bw : (netCredit>0?-1:0);
+  const maxCredit = bw*0.9+reserve;
+  const gapFlat = maxCredit-credit;
+  const k = (1-crash)*satzEff;
+  const damp = 1-0.9*k;
+  const factor = damp>0 ? 1/damp : 0;
+  const gapInvest = gapFlat*factor;
+  const fill = bw>0 ? netCredit/bw : 0;
+  const interestYear = credit*rate;
+
+  let st = creditLeft<0 ? "breach" : (creditLeft<0.1 ? "tight" : "safe");
+  return {depot,credit,kl,crash,rate,cash,holdGross,satz,satzEff,depotCrash,bw,
+          holdCrash,reserve,netCredit,creditLeft,maxCredit,gapFlat,gapInvest,
+          factor,k,fill,interestYear,st};
+}
+
+function buildFields(){
+  const box = document.getElementById("fields");
+  box.innerHTML = "";
+  FIELDS.forEach(f=>{
+    const l=document.createElement("label"); l.className="f";
+    l.innerHTML = '<div class="fh"><span class="fl">'+f.label+'</span>'+
+                  '<span class="fhint" id="hint-'+f.k+'"></span></div>'+
+                  '<div class="fin"><input id="in-'+f.k+'" inputmode="decimal">'+
+                  '<span class="sfx">'+f.sfx+'</span></div>';
+    box.appendChild(l);
+    const inp = l.querySelector("input");
+    inp.value = state[f.k];
+    inp.addEventListener("input", ()=>{ state[f.k]=inp.value; save(); render(); });
+  });
+}
+
+function render(){
+  const s = calc();
+  const tone = s.st==="safe" ? "var(--safe)" : (s.st==="tight" ? "var(--warn)" : "var(--breach)");
+  const verdict = s.st==="safe" ? "Über der 10%-Grenze"
+                : s.st==="tight" ? "Unter der 10%-Grenze" : "Margin Call im Crash";
+
+  document.getElementById("scen").textContent = "−"+new Intl.NumberFormat("de-DE").format(s.crash*100)+" % Szenario";
+  const b=document.getElementById("buffer");
+  b.textContent = s.bw>0 ? pct(s.creditLeft) : "—"; b.style.color=tone;
+  const v=document.getElementById("verdict"); v.textContent=verdict; v.style.color=tone;
+
+  const fillEl=document.getElementById("fill");
+  fillEl.style.width = Math.min(Math.max(s.fill,0),1)*100+"%";
+  fillEl.style.background = s.st==="safe" ? "rgba(61,214,140,.30)"
+                          : s.st==="tight" ? "rgba(245,165,36,.30)" : "rgba(229,72,77,.32)";
+  fillEl.style.borderRight = "2px solid "+tone;
+  document.getElementById("over").style.width = Math.min(Math.max(s.fill-1,0)*100,12)+"%";
+  document.getElementById("glLeft").textContent =
+    s.reserve>0 ? "netto "+eur(s.netCredit) : "genutzt "+eur(s.credit);
+
+  const pos = s.gapFlat>=0;
+  document.getElementById("hLbl").textContent = pos?"Noch aufnehmbar":"Zu viel Kredit";
+  document.getElementById("hFactor").textContent = "Faktor "+dec(s.factor)+"×";
+  const hm=document.getElementById("hMain");
+  hm.textContent = pos ? eur(s.gapInvest) : "− "+eur(Math.abs(s.gapInvest));
+  hm.style.color = pos?"var(--safe)":"var(--breach)";
+  document.getElementById("hNote").textContent =
+    pos ? "wenn du es aufnimmst und investierst" : "wenn du durch Verkauf zurückzahlst";
+  document.getElementById("hAltLbl").textContent = pos?"Als Cash auszahlen":"Aus Cash zurückzahlen";
+  document.getElementById("hAlt").textContent = eur(Math.abs(s.gapFlat));
+  document.getElementById("hHint").textContent = pos
+    ? "Investiertes Geld hebt den Beleihungswert um "+pct(s.k,0)+" je Euro, ausgezahltes nicht."
+    : "Ein Verkauf nimmt dir "+pct(s.k,0)+" Beleihungswert je Euro mit, Cash tilgt 1:1.";
+
+  document.getElementById("iM").textContent = eur(s.interestYear/12);
+  document.getElementById("iY").textContent = eur(s.interestYear);
+
+  FIELDS.forEach(f=>{
+    const el=document.getElementById("hint-"+f.k);
+    if(el) el.textContent = f.hint ? f.hint(s) : "";
+  });
+
+  document.getElementById("box").className = "box"+(state.bwCut?" on":"");
+  document.getElementById("chk").style.borderColor = state.bwCut?"var(--warn)":"var(--line)";
+
+  const rows=[
+    ["Depot nach −"+new Intl.NumberFormat("de-DE").format(s.crash*100)+" %", eur(s.depotCrash), false],
+    ["Beleihungssatz"+(state.bwCut?" (gestresst)":""), pct(s.satzEff,2), false],
+    ["Beleihungswert im Crash", eur(s.bw), true],
+  ];
+  if(s.cash>0) rows.push(["Liquides Cash", eur(s.cash), false]);
+  if(s.holdGross>0) rows.push(["Holdings nach −"+new Intl.NumberFormat("de-DE").format(s.crash*100)+" %", eur(s.holdCrash), false]);
+  if(s.reserve>0) rows.push(["Kredit abzgl. Reserve", eur(s.netCredit), false]);
+  rows.push(["Max. Kredit bei 10 % Puffer", eur(s.maxCredit), true]);
+  rows.push(["Beleihbar je investierter Euro", pct(s.k,1), false]);
+
+  document.getElementById("rows").innerHTML = rows.map(r=>
+    '<div class="r'+(r[2]?" s":"")+'"><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>'
+  ).join("");
+}
+
+document.getElementById("chk").addEventListener("click", ()=>{
+  state.bwCut=!state.bwCut; save(); render();
+});
+
+buildFields();
+render();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
